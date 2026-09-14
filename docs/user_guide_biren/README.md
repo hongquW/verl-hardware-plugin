@@ -34,7 +34,7 @@ user_guide_biren/
 | Device type | `supa` |
 | Vendor identifier | `biren` |
 | Runtime | SUPA / `torch_supa` |
-| Communication backend | `nccl` API mapped to BCCL by SUPA |
+| Communication backend | `bccl` |
 | Device visibility env var | `SUPA_VISIBLE_DEVICES` |
 | Ray resource name | `GPU` |
 | IPC support | Yes |

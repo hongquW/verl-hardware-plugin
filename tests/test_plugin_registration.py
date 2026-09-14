@@ -361,7 +361,6 @@ class TestPlatformRegistration:
         assert entered
     def test_supa_detection_with_env(self):
         from verl.plugin.platform.platform_manager import _detect_platform_name
-
         from verl_hardware_plugin.platforms.platform_supa import PlatformSupa  # noqa: F401
 
         with _fresh_registries():
