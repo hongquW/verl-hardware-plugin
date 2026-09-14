@@ -86,3 +86,11 @@ def register_all_platforms():
         logger.info("Registered platform: moore_threads (musa)")
     except Exception as e:
         logger.debug("MUSA platform not registered: %s", e)
+
+    # Biren SUPA — CUDA-compatible, requires torch_supa
+    try:
+        from verl_hardware_plugin.platforms import platform_supa  # noqa: F401
+
+        logger.info("Registered platform: biren (supa)")
+    except Exception as e:
+        logger.debug("SUPA platform not registered: %s", e)

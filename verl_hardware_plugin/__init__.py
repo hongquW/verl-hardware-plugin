@@ -3,8 +3,9 @@
 
 """verl hardware plugin - Multi-chip platform and engine support.
 
-This package registers hardware platforms (MetaX, XPU, MLU, Enflame GCU) and their
-corresponding training engines with verl's plugin system.
+This package registers hardware platforms (MetaX, XPU, MLU, Enflame GCU,
+Biren SUPA, ...) and their corresponding training engines with verl's
+plugin system.
 
 Discovered automatically via setuptools entry_points (verl.plugins group).
 """

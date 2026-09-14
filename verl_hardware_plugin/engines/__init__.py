@@ -149,3 +149,18 @@ def register_all_engines():
         logger.info("Registered engines: megatron_musa")
     except Exception as e:
         logger.debug("MUSA Megatron engine not registered: %s", e)
+
+    # Biren SUPA engines (CUDA-compatible with BCCL communication)
+    try:
+        from verl_hardware_plugin.engines import fsdp_supa  # noqa: F401
+
+        logger.info("Registered engines: fsdp_supa")
+    except Exception as e:
+        logger.debug("SUPA FSDP engines not registered: %s", e)
+
+    try:
+        from verl_hardware_plugin.engines import megatron_supa  # noqa: F401
+
+        logger.info("Registered engines: megatron_supa")
+    except Exception as e:
+        logger.debug("SUPA Megatron engines not registered: %s", e)
