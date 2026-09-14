@@ -16,6 +16,7 @@ from types import ModuleType
 from typing import Any, Optional
 
 import torch
+
 from verl.plugin.platform.platform_base import PlatformBase
 from verl.plugin.platform.platform_manager import PlatformRegistry
 
@@ -29,7 +30,7 @@ def _ensure_torch_supa() -> bool:
     if hasattr(torch, "supa"):
         return True
     try:
-        import torch_supa
+        import torch_supa  # noqa: F401  # imported for side effect (makes torch.supa available)
 
         return hasattr(torch, "supa")
     except ImportError as exc:
