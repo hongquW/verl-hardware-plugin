@@ -71,7 +71,16 @@ export RAY_ADDRESS='auto'
 # Worker nodes
 ray start --address='<head-ip>:6379'
 
-NNODES=2 bash scripts/baseline_grpo_gsm8k.sh
+export VERL_PLATFORM=biren
+export SUPA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES=1
+export RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+
+NNODES=2 bash scripts/baseline_grpo_gsm8k.sh \
+    "+ray_kwargs.ray_init.runtime_env.env_vars.VERL_PLATFORM='${VERL_PLATFORM}'" \
+    "+ray_kwargs.ray_init.runtime_env.env_vars.SUPA_VISIBLE_DEVICES='${SUPA_VISIBLE_DEVICES}'" \
+    "+ray_kwargs.ray_init.runtime_env.env_vars.RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES='${RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES}'" \
+    "$@"
 ```
 
 Biren uses Ray's built-in `GPU` resource. Do not configure a custom `biren` or `supa` resource.

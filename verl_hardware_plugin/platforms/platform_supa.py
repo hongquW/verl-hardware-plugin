@@ -103,7 +103,7 @@ class PlatformSupa(PlatformBase):
         torch.supa.empty_cache()
 
     def get_device_capability(self, device_index: int = 0) -> tuple[Optional[int], Optional[int]]:
-        if not self.is_available() or not hasattr(torch.cuda, "get_device_capability"):
+        if not self.is_available() or not hasattr(torch.supa, "get_device_capability"):
             return None, None
         return torch.supa.get_device_capability(device_index)
 
