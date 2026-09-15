@@ -216,13 +216,13 @@ class TestPlatformRegistration:
         assert platform.vendor_name == "moore_threads"
         assert platform.communication_backend_name() == "mccl"
 
-    def test_supa_detection_with_env(self):
+    def test_biren_detection_with_env(self):
         from verl.plugin.platform.platform_manager import _detect_platform_name
         from verl_hardware_plugin.platforms.platform_supa import PlatformSupa  # noqa: F401
 
         with _fresh_registries():
-            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "supa"}):
-                assert _detect_platform_name() == "supa"
+            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "biren"}):
+                assert _detect_platform_name() == "biren"
 
     def test_supa_device_and_vendor_names(self):
         from verl_hardware_plugin.platforms.platform_supa import PlatformSupa
