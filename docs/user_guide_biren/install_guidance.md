@@ -2,6 +2,7 @@
 
 ## Prerequisites
 
+- Biren Docker images from the [community website](https://developers.birentech.com/)
 - Biren release environment with matching driver, SUPA runtime, and `torch_supa`
 - Network access to download models and datasets
 - A VERL checkout and this plugin checkout

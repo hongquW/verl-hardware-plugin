@@ -364,8 +364,8 @@ class TestPlatformRegistration:
         from verl_hardware_plugin.platforms.platform_supa import PlatformSupa  # noqa: F401
 
         with _fresh_registries():
-            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "supa"}):
-                assert _detect_platform_name() == "supa"
+            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "biren"}):
+                assert _detect_platform_name() == "biren"
 
     def test_supa_device_and_vendor_names(self):
         from verl_hardware_plugin.platforms.platform_supa import PlatformSupa
