@@ -28,7 +28,7 @@ The platforms and engines in this repository are **reference implementations** �
 | Iluvatar | BI-V150 (CUDA-compatible) | IXCCL | ✅ Supported | [User Guide](docs/user_guide_iluvatar/README.md) |
 | Moore Threads | MUSA (CUDA-compatible) | MCCL | ✅ Supported | [User Guide](docs/user_guide_musa/README.md) |
 | Google TPU | v6e | tpu_dist | Platform only (engine pending) | [User Guide](docs/user_guide_tpu/README.md) |
-| Biren | SUPA (CUDA-compatible) | BCCL | ⏳ Example (pending device verification) | [User Guide](docs/user_guide_biren/README.md) |
+| Biren | SUPA (CUDA-compatible) | BCCL | Platform only (engine pending) | [User Guide](docs/user_guide_biren/README.md) |
 
 
 ## Installation
