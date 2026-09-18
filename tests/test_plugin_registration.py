@@ -118,6 +118,14 @@ class TestPlatformRegistration:
         cls = PlatformRegistry.get("musa")
         assert cls is PlatformMUSA
 
+    def test_tpu_registered(self):
+        from verl.plugin.platform.platform_manager import PlatformRegistry
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU  # noqa: F401
+
+        assert "tpu" in PlatformRegistry.registered_names()
+        cls = PlatformRegistry.get("tpu")
+        assert cls is PlatformTPU
+
     def test_xpu_detection_with_env(self):
         from verl.plugin.platform.platform_manager import _detect_platform_name
         from verl_hardware_plugin.platforms.platform_xpu import PlatformXPU  # noqa: F401
@@ -208,6 +216,14 @@ class TestPlatformRegistration:
             with mock.patch.dict(os.environ, {"VERL_PLATFORM": "musa"}):
                 assert _detect_platform_name() == "musa"
 
+    def test_tpu_detection_with_env(self):
+        from verl.plugin.platform.platform_manager import _detect_platform_name
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU  # noqa: F401
+
+        with _fresh_registries():
+            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "tpu"}):
+                assert _detect_platform_name() == "tpu"
+
     def test_musa_device_and_vendor_names(self):
         from verl_hardware_plugin.platforms.platform_musa import PlatformMUSA
 
@@ -215,6 +231,150 @@ class TestPlatformRegistration:
         assert platform.device_name == "musa"
         assert platform.vendor_name == "moore_threads"
         assert platform.communication_backend_name() == "mccl"
+
+    def test_tpu_device_and_vendor_names(self):
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.device_name == "tpu"
+        assert platform.vendor_name == "google"
+        assert platform.communication_backend_name() == "tpu_dist"
+
+    def test_tpu_ray_resource_options(self):
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.ray_resource_name() == "TPU"
+        assert platform.ray_resource_options(4) == {"resources": {"TPU": 4}}
+        assert platform.ray_resource_options(0) == {}
+
+    def test_tpu_core_hooks(self):
+        """The three PlatformBase hooks TPU needs from verl core.
+
+        Inert on verl 0.9.0 -- nothing calls them yet. They are defined
+        unconditionally so the plugin needs no change when core lands the call sites.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.supports_colocated_worker_groups() is False
+        assert "RAY_EXPERIMENTAL_NOSET_TPU_VISIBLE_CHIPS" in platform.ray_noset_envvars()
+        with mock.patch.dict(os.environ, {"TPU_VISIBLE_CHIPS": "3"}):
+            assert platform.ray_local_rank_override() == "3"
+
+    def test_tpu_derives_from_platform_base(self):
+        """PlatformTPU must not acquire another vendor's platform behaviour by inheritance.
+
+        Deriving from a CUDA platform would silently supply CUDA answers for methods TPU
+        never defined. PlatformBase keeps every answer explicit in the class, and makes a
+        newly added abstract method fail loudly at instantiation instead.
+        """
+        from verl.plugin.platform.platform_base import PlatformBase
+        from verl.plugin.platform.platform_cuda import PlatformCUDA
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        assert issubclass(PlatformTPU, PlatformBase)
+        assert not issubclass(PlatformTPU, PlatformCUDA)
+        assert PlatformTPU.__abstractmethods__ == frozenset()
+
+    def test_tpu_no_cuda_collective_or_rollout_env(self):
+        """Neither CUDA answer is usable on TPU, so both must be the vendor-neutral default.
+
+        cupy's NCCL binding cannot drive a TPU interconnect, and NCCL_CUMEM_ENABLE has no
+        meaning in a TPU rollout worker.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.get_collective_module() is None
+        assert platform.rollout_env_vars() == {}
+
+    def test_tpu_memory_and_capability_methods(self):
+        """empty_cache() must reach the TPU device module, never torch.cuda.empty_cache()."""
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.empty_cache() is None
+        assert platform.set_allocator_settings("expandable_segments:True") is None
+        assert platform.get_device_capability() == (None, None)
+
+    def test_tpu_ray_noset_envvars(self):
+        """Both entries are load-bearing, including the CUDA one.
+
+        visible_devices_envvar() deliberately returns CUDA_VISIBLE_DEVICES, so Ray must be
+        told not to manage that variable either. Dropping it breaks rank mapping.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        assert PlatformTPU().ray_noset_envvars() == [
+            "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES",
+            "RAY_EXPERIMENTAL_NOSET_TPU_VISIBLE_CHIPS",
+        ]
+
+    def test_tpu_ipc_unsupported(self):
+        """TPU has no CUDA-style IPC handle, so verl must fall back to shared memory.
+
+        verl computes ``use_shm = not is_support_ipc()``. Reporting True would route weight
+        transfer down the CUDA IPC path, which cannot work on TPU: torch in the TPU image is
+        a CPU build and ``_share_cuda_()`` raises.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        assert PlatformTPU().is_ipc_supported() is False
+
+    def test_tpu_keeps_cuda_visible_devices_envvar(self):
+        """Intentional, not an oversight: TPU keeps CUDA_VISIBLE_DEVICES.
+
+        Returning TPU_VISIBLE_CHIPS here would let vllm_async_server overwrite the
+        chip index that get_worker_env_vars() writes and ray_local_rank_override()
+        reads. See spec D4.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        assert PlatformTPU().visible_devices_envvar() == "CUDA_VISIBLE_DEVICES"
+
+    def test_tpu_cudart_returns_none(self):
+        """There is no CUDA runtime on a TPU host; PlatformBase documents None as the answer."""
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        assert PlatformTPU().cudart() is None
+
+    def test_tpu_profiler_is_noop(self):
+        """PlatformBase asks platforms without profiling support for no-ops.
+
+        verl calls both from utils/profiler/nvtx_profile.py; a CUDA implementation would
+        raise AssertionError ("Torch not compiled with CUDA enabled") on a TPU host.
+        """
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        platform = PlatformTPU()
+        assert platform.profiler_start() is None
+        assert platform.profiler_stop() is None
+
+    def test_tpu_nvtx_range_yields(self):
+        """nvtx_range must yield immediately; inherited torch.cuda.nvtx raises without NVTX."""
+        from verl_hardware_plugin.platforms.platform_tpu import PlatformTPU
+
+        entered = False
+        with PlatformTPU().nvtx_range("tpu-test"):
+            entered = True
+        assert entered
+
+    def test_supa_detection_with_env(self):
+        from verl.plugin.platform.platform_manager import _detect_platform_name
+        from verl_hardware_plugin.platforms.platform_supa import PlatformSupa  # noqa: F401
+
+        with _fresh_registries():
+            with mock.patch.dict(os.environ, {"VERL_PLATFORM": "biren"}):
+                assert _detect_platform_name() == "biren"
+
+    def test_supa_device_and_vendor_names(self):
+        from verl_hardware_plugin.platforms.platform_supa import PlatformSupa
+
+        platform = PlatformSupa()
+        assert platform.device_name == "supa"
+        assert platform.vendor_name == "biren"
+        assert platform.communication_backend_name() == "bccl"
 
 
 class TestEngineRegistration:

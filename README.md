@@ -27,6 +27,8 @@ The platforms and engines in this repository are **reference implementations** �
 | Huawei NPU | Ascend 910B | HCCL | Built-in (verl core) | [Ascend Tutorial](https://github.com/verl-project/verl/tree/main/docs/ascend_tutorial) |
 | Iluvatar | BI-V150 (CUDA-compatible) | IXCCL | ✅ Supported | [User Guide](docs/user_guide_iluvatar/README.md) |
 | Moore Threads | MUSA (CUDA-compatible) | MCCL | ✅ Supported | [User Guide](docs/user_guide_musa/README.md) |
+| Google TPU | v6e | tpu_dist | Platform only (engine pending) | [User Guide](docs/user_guide_tpu/README.md) |
+| Biren | SUPA (CUDA-compatible) | BCCL | Platform only (engine pending) | [User Guide](docs/user_guide_biren/README.md) |
 
 
 ## Installation
@@ -53,12 +55,14 @@ verl-FL (main framework)
             ├── PlatformRegistry.register("metax")    → PlatformMetaX
             ├── PlatformRegistry.register("enflame")  → PlatformENFLAME
             ├── PlatformRegistry.register("flagos")   → PlatformFlagOS
+            ├── PlatformRegistry.register("biren")    → PlatformSUPA
             │
             ├── EngineRegistry.register(device="xpu", vendor="intel")
             ├── EngineRegistry.register(device="mlu", vendor="cambricon")
             ├── EngineRegistry.register(device="cuda", vendor="metax")
             ├── EngineRegistry.register(device="enflame", vendor="enflame")
             └── EngineRegistry.register(device="cuda", vendor="flagos")
+            └── EngineRegistry.register(device="supa", vendor="biren")
 ```
 
 The plugin uses verl's decorator-based registration:
@@ -91,6 +95,7 @@ Each hardware platform provides a standalone user guide (following the structure
 - **[FlagOS](docs/user_guide_flagos/README.md)** — FlagOS unified heterogeneous engine user guide ([NVIDIA](docs/user_guide_flagos/nvidia/README.md))
 - **[Enflame GCU](docs/user_guide_enflame/README.md)** — Enflame GCU user guide
 - **[Moore Threads GPU](docs/user_guide_musa/README.md)** — Moore Threads GPU user guide
+- **[Biren SUPA](docs/user_guide_biren/README.md)** — Biren SUPA accelerator user guide
 
 ### Developer Guides
 
